@@ -1,40 +1,87 @@
 pipeline {
     agent any
+    tools {
+        jdk 'JDK'
+        nodejs 'NodeJS'
+    }
     environment {
-          APP_NAME = "reddit-clone-pipeline"
+        SCANNER_HOME = tool 'sonar-scanner'
     }
     stages {
-         stage("Cleanup Workspace") {
-             steps {
+        stage('clean workspace') {
+            steps {
                 cleanWs()
-             }
-         }
-         stage("Checkout from SCM") {
-             steps {
-                     git branch: 'main', credentialsId: 'github', url: 'https://github.com/Ashfaque-9x/a-reddit-clone-gitops'
-             }
-         }
-         stage("Update the Deployment Tags") {
-            steps {
-                sh """
-                    cat deployment.yaml
-                    sed -i 's/${APP_NAME}.*/${APP_NAME}:${IMAGE_TAG}/g' deployment.yaml
-                    cat deployment.yaml
-                """
             }
-         }
-         stage("Push the changed deployment file to GitHub") {
+        }
+        stage('Checkout from Git') {
             steps {
-                sh """
-                    git config --global user.name "Ashfaque-9x"
-                    git config --global user.email "ashfaque.s510@gmail.com"
-                    git add deployment.yaml
-                    git commit -m "Updated Deployment Manifest"
-                """
-                withCredentials([gitUsernamePassword(credentialsId: 'github', gitToolName: 'Default')]) {
-                    sh "git push https://github.com/Ashfaque-9x/a-reddit-clone-gitops main"
+                git branch: 'main', url: 'https://github.com/xeeshanakram/reddit-clone.git'
+            }
+        }
+        stage("Sonarqube Analysis") {
+            steps {
+                withSonarQubeEnv('SonarQube-Server') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=reddit-CICD \
+                    -Dsonar.projectKey=reddit-CICD'''
                 }
             }
+        }
+        stage("Quality Gate") {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-Token'
+                }
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh "npm install"
+            }
+        }
+        stage('TRIVY FS SCAN') {
+             steps {
+                 sh "trivy fs . > trivyfs.txt"
+             }
          }
+         stage("Docker Build & Push"){
+             steps{
+                 script{
+                   withDockerRegistry(credentialsId: 'dockerhub', toolName: 'docker'){   
+                      sh "docker build -t reddit-app ."
+                      sh "docker tag reddit-app xeeshanakram/reddit-app:latest "
+                      sh "docker push xeeshanakram/reddit-app:latest "
+                    }
+                }
+            }
+        }
+        stage("TRIVY Image Scan"){
+            steps{
+                sh "trivy image xeeshanakram/reddit-app:latest > trivyimage.txt" 
+            }
+        }
+        stage('Deploy to Kubernets'){
+            steps{
+                script{
+                    dir('Kubernetes') {
+                      withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'kubernetes', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
+                      sh 'kubectl delete --all pods'
+                      sh 'kubectl apply -f deployment.yml'
+                      sh 'kubectl apply -f service.yml'
+                      }   
+                    }
+                }
+            }
+        }
+    }
+    post {
+     always {
+        emailext attachLog: true,
+            subject: "'${currentBuild.result}'",
+            body: "Project: ${env.JOB_NAME}<br/>" +
+                "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                "URL: ${env.BUILD_URL}<br/>",
+            to: 'jamzeeshanakram@gmail.com',                              
+            attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
+        }
     }
 }
