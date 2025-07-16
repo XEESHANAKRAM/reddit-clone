@@ -1,4 +1,4 @@
-[A] Let's use Terraform to create an EC2 instance for Jenkins, Docker and SonarQube
+[A] Let's use Terraform to create an EC2 instance for Jenkins, Docker and SonarQube 
 1--main.tf
 resource "aws_instance" "web" {
   ami                    = "ami-0287a05f0ef0e9d9a"      #change ami id for different region
