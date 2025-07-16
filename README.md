@@ -127,13 +127,14 @@ EKS Workshop: ArgoCD Install
 
 #ArgoCD CLI Installation
 
-#[B] 🚀 Create AWS EKS Cluster
+###[B] 🚀 Create AWS EKS Cluster
 #1. Install kubectl on Jenkins Server
 ```sudo apt update
 sudo apt install curl
 curl -LO https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-kubectl version --client```
+kubectl version --client
+```
 
 #2. Install AWS CLI
 
