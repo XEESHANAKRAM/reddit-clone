@@ -238,18 +238,15 @@ echo WXVpLUg2LWxoWjRkSHFmSA== | base64 --decode
 # 8. List Available Clusters
 
 ```argocd cluster list
-kubectl config get-contexts
-```
+kubectl config get-contexts```
 # 9. Add EKS Cluster to ArgoCD
 
-```argocd cluster add i-08b9d0ff0409f48e7@virtualtechbox-cluster.ap-south-1.eksctl.io --name virtualtechbox-eks-cluster
-```
+```argocd cluster add i-08b9d0ff0409f48e7@virtualtechbox-cluster.ap-south-1.eksctl.io --name virtualtechbox-eks-cluster```
 # [E] 🔁 CI/CD Pipeline Test
 
 ```git config --global user.name "XEESHANAKRAM"
 git config --global user.email "jamzeeshanakram@gmail.com"
-git clone https://github.com/XEESHANAKRAM/reddit-clone.git
-```
+git clone https://github.com/XEESHANAKRAM/reddit-clone.git```
 [F] 🧹 Cleanup Steps
 # 1. Delete Prometheus & ArgoCD Namespaces
 
@@ -258,8 +255,7 @@ kubectl delete namespace argocd
 ```
 # 2. Delete EKS Cluster
 
-```eksctl delete cluster virtualtechbox-cluster --region ap-south-1
-```
+```eksctl delete cluster virtualtechbox-cluster --region ap-south-1```
 # 3. Destroy Terraform Infrastructure
 
 ```terraform destroy
